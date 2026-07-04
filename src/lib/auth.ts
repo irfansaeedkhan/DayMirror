@@ -3,7 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { db } from "@/db";
 import * as schema from "@/db/schema";
-import { getEnv, getTrustedOrigins, isProduction } from "@/lib/env";
+import { getAuthBaseURL, getEnv, getTrustedOrigins, isProduction } from "@/lib/env";
 
 function createAuth() {
   const env = getEnv();
@@ -22,7 +22,7 @@ function createAuth() {
   return betterAuth({
     appName: "DayMirror",
     secret: env.BETTER_AUTH_SECRET,
-    baseURL: env.BETTER_AUTH_URL,
+    baseURL: getAuthBaseURL(),
     trustedOrigins: getTrustedOrigins(),
 
     database: drizzleAdapter(db, {

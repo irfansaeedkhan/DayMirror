@@ -67,7 +67,7 @@ chronos/src/
 │
 ├── hooks/                    # TanStack Query hooks (client)
 ├── types/                    # shared TypeScript types
-└── middleware.ts             # Next.js route protection
+└── proxy.ts                  # Next.js route protection (auth redirects)
 ```
 
 ### Separation rules

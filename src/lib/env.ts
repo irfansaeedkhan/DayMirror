@@ -50,12 +50,51 @@ export function getAllowedOrigins(): string[] {
     .filter(Boolean);
 }
 
+/**
+ * Better Auth base URL for OAuth callbacks and trusted-origin checks.
+ * On Vercel, prefer the auto-injected deployment host so a mis-set
+ * BETTER_AUTH_URL (e.g. a guessed domain) cannot break Google login.
+ */
+export function getAuthBaseURL(): string {
+  const env = getEnv();
+  const configured = env.BETTER_AUTH_URL.replace(/\/$/, "");
+
+  const vercelHost =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
+
+  if (vercelHost) {
+    return `https://${vercelHost}`;
+  }
+
+  return configured;
+}
+
 export function getTrustedOrigins(): string[] {
   const env = getEnv();
-  return (env.BETTER_AUTH_TRUSTED_ORIGINS ?? "")
-    .split(",")
-    .map((o) => o.trim())
-    .filter(Boolean);
+  const origins = new Set<string>();
+
+  for (const origin of (env.BETTER_AUTH_TRUSTED_ORIGINS ?? "").split(",")) {
+    const trimmed = origin.trim();
+    if (trimmed) origins.add(trimmed);
+  }
+
+  for (const url of [getAuthBaseURL(), env.BETTER_AUTH_URL]) {
+    try {
+      origins.add(new URL(url).origin);
+    } catch {
+      // ignore invalid URLs
+    }
+  }
+
+  if (process.env.VERCEL_URL) {
+    origins.add(`https://${process.env.VERCEL_URL}`);
+  }
+
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    origins.add(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
+  }
+
+  return [...origins];
 }
 
 export function isProduction(): boolean {

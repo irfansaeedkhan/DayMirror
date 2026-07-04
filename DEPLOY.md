@@ -117,7 +117,7 @@ Add each variable for **Production** (and Preview if you want staging):
 |---|---|---|
 | `DATABASE_URL` | Neon **pooled** connection string | Required |
 | `BETTER_AUTH_SECRET` | New secret: `openssl rand -base64 32` | **Different from local** — generate fresh |
-| `BETTER_AUTH_URL` | `https://your-app.vercel.app` | Your Vercel URL (update after first deploy if needed) |
+| `BETTER_AUTH_URL` | `https://day-mirror-mocha.vercel.app` | Your live URL (custom domain later). On Vercel, the app also auto-detects `VERCEL_URL` at runtime if this is wrong. |
 | `GOOGLE_CLIENT_ID` | Same as local | From Google Console |
 | `GOOGLE_CLIENT_SECRET` | Same as local | From Google Console |
 | `NODE_ENV` | `production` | Usually auto-set by Vercel |
@@ -184,7 +184,8 @@ See `OAUTH-SETUP.md` for details.
 |---|---|
 | Build fails on env | All required vars set? `BETTER_AUTH_SECRET`, `DATABASE_URL`, `BETTER_AUTH_URL` |
 | `DATABASE_URL is not set` | Add pooled Neon URL in Vercel env, redeploy |
-| Google `redirect_uri_mismatch` | Add production callback URL in Google Console |
+| Google `redirect_uri_mismatch` | `BETTER_AUTH_URL` must be your **real** Vercel URL (check Deployments tab). Google redirect URI must match `{BETTER_AUTH_URL}/api/auth/callback/google`. Redeploy after env change. |
+| `Invalid origin` / auth 403 | `BETTER_AUTH_URL` does not match browser URL — fix env and redeploy |
 | Login works but API 401 | `BETTER_AUTH_URL` must match site URL exactly; cookies need same domain |
 | DB connection errors | Use **pooled** URL on Vercel, not direct |
 | Tables missing | Run `yarn db:push` against Neon direct URL from local machine |

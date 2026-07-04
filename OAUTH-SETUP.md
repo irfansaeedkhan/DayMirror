@@ -1,4 +1,4 @@
-# Google OAuth setup for Chronos
+# Google OAuth setup for DayMirror
 
 ## The exact redirect URI (copy-paste this)
 
@@ -71,5 +71,53 @@ When deployed, add to the same OAuth client:
 | JavaScript origins | `https://your-app.vercel.app` |
 | Redirect URI | `https://your-app.vercel.app/api/auth/callback/google` |
 
-Set in Vercel env:
-- `BETTER_AUTH_URL=https://your-app.vercel.app`
+Set in Vercel env (use your **actual** URL from the Vercel Deployments tab — not a guessed name):
+- `BETTER_AUTH_URL=https://day-mirror-mocha.vercel.app`
+
+After changing env vars, **Redeploy** (Deployments → ⋯ → Redeploy).
+
+---
+
+## Troubleshooting
+
+### `redirect_uri_mismatch` or Google shows wrong domain
+
+Google error details often show the redirect URI your app **actually** sends, e.g.:
+
+```
+redirect_uri=https://daymirror.vercel.app/api/auth/callback/google
+```
+
+If that domain is **not** your live site, `BETTER_AUTH_URL` on Vercel is wrong.
+
+| Wrong | Right |
+|---|---|
+| `https://daymirror.vercel.app` (placeholder / guessed) | `https://day-mirror-mocha.vercel.app` (your real Vercel URL) |
+
+Fix: Vercel → Settings → Environment Variables → update `BETTER_AUTH_URL` → **Redeploy**.
+
+Google Console redirect URI must match **exactly** what Better Auth sends:
+
+```
+https://YOUR-VERCEL-URL/api/auth/callback/google
+```
+
+### `Invalid origin` (403 from `/api/auth/*`)
+
+Same root cause: `BETTER_AUTH_URL` must match the URL in the browser bar. Optionally add:
+
+```
+BETTER_AUTH_TRUSTED_ORIGINS=https://day-mirror-mocha.vercel.app
+```
+
+### Google Console — keep only these (remove extras)
+
+**Authorized JavaScript origins:**
+- `http://localhost:3000`
+- `https://day-mirror-mocha.vercel.app`
+
+**Authorized redirect URIs:**
+- `http://localhost:3000/api/auth/callback/google`
+- `https://day-mirror-mocha.vercel.app/api/auth/callback/google`
+
+Do **not** add bare `/login` or domain-only paths — Google only accepts the callback path above.
