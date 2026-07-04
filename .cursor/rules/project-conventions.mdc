@@ -1,0 +1,35 @@
+---
+description: Chronos architecture, auth, and coding conventions — always follow
+alwaysApply: true
+---
+
+# Chronos Agent Rules
+
+Read before creating files or modules:
+
+- `chronos/AGENTS.md` — master agent instructions
+- `chronos/PROJECT-CONVENTIONS.md` — folder structure, layer separation
+- `chronos/DESIGN-ETHICS.md` — Sunsama-aligned UI standards (required for any UI/landing work)
+- `chronos/ROADMAP.md` — current launch phase
+
+## Auth work
+
+Load skills from `chronos/.agents/skills/`:
+- `better-auth-best-practices`
+- `better-auth-security-best-practices`
+- `create-auth-skill`
+
+Reference implementation: `best-practices-flow/apps/backend/src/lib/auth.ts`
+
+## Architecture
+
+- Controllers → Services → Repositories (never skip layers)
+- Better Auth at `/api/auth/*`; business API at `/api/*` via Hono
+- `userId` filter on every repository query
+- Named exports, kebab-case files
+- Use yarn, not npm
+
+## UI
+
+Do not change existing UI layout/colors without user approval.
+When building new UI (auth pages, landing), follow DESIGN-ETHICS.md.
