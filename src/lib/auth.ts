@@ -20,7 +20,7 @@ function createAuth() {
       : undefined;
 
   return betterAuth({
-    appName: "Chronos",
+    appName: "DayMirror",
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
     trustedOrigins: getTrustedOrigins(),

@@ -1,6 +1,6 @@
-# Chronos — Launch Roadmap
+# DayMirror — Launch Roadmap
 
-> The single source of truth for taking Chronos from local project to live product.
+> The single source of truth for taking DayMirror from local project to live product.
 > Owner: you. Review cadence: weekly. Cross items off — don't let this rot.
 >
 > Positioning in one line: **"See where your day actually went."**
@@ -42,8 +42,8 @@ Goal: live URL, monitored, with real data safety.
 
 > **Step-by-step guide:** [DEPLOY.md](./DEPLOY.md) — Vercel + Neon for first-time deployers.
 
-- [ ] **Database: Neon** (managed Postgres, free tier, branching). Run `yarn db:push` against Neon direct URL.
-- [ ] **Hosting: Vercel** — Hono already runs in a route handler; zero config changes.
+- [x] **Database: Neon** — schema pushed (`user`, `tasks`, `hour_logs`, auth tables, etc.)
+- [ ] **Hosting: Vercel** — import `irfansaeedkhan/DayMirror`, root directory = `.`
 - [ ] **Domain** — buy the .com (or .app). Short, spellable. Set up before SEO work, never change it after.
 - [ ] **Sentry** (free tier) for error tracking, client + server.
 - [ ] **Vercel Analytics** or Plausible for traffic.
@@ -55,7 +55,7 @@ Goal: live URL, monitored, with real data safety.
 Goal: a Sunsama-quality landing page that ranks on Google AND gets cited by AI assistants.
 
 ### Landing page (Next.js, same repo, statically rendered)
-- [ ] Hero: one emotional promise — "See where your day actually went." Product screenshot (the colored hourly timeline is your money shot).
+- [ ] Hero: **"Stop guessing where your day went."** + subhead from `BRAND.md` + CTA **Start Reflecting**
 - [ ] Problem → solution narrative (Sunsama's structure: "work is chaotic" ❌❌❌ → "clarity" ✅✅✅).
 - [ ] Feature sections with real screenshots: hourly tracker, planner, analytics.
 - [ ] Social proof section (starts empty — fill with beta user quotes ASAP).

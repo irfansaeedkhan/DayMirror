@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Chronos",
+  title: "DayMirror",
   description: "Hybrid productivity planner and hourly tracker",
 };
 

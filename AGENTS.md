@@ -1,4 +1,4 @@
-# Chronos — Agent Instructions
+# DayMirror — Agent Instructions
 
 <!-- BEGIN:nextjs-agent-rules -->
 ## Next.js version note
@@ -12,6 +12,7 @@ This is NOT the Next.js you know. Next.js 16 has breaking changes — read guide
 
 | Doc | When |
 |---|---|
+| [BRAND.md](./BRAND.md) | Positioning, tagline, brand pillars |
 | [CONTEXT.md](./CONTEXT.md) | **Start here in a new Cursor session** — phase status and doc index |
 | [ROADMAP.md](./ROADMAP.md) | Launch priorities, phase order |
 | [DEPLOY.md](./DEPLOY.md) | Vercel + Neon deploy guide |

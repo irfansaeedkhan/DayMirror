@@ -28,7 +28,7 @@ app.use(
 app.use("*", rateLimiter({ windowMs: 60_000, limit: 300 }));
 app.use("*", bodyLimit({ maxSize: 100 * 1024 })); // 100kb — largest payload is a task with notes
 
-app.get("/health", (c) => c.json({ data: { status: "ok", service: "chronos" } }));
+app.get("/health", (c) => c.json({ data: { status: "ok", service: "daymirror" } }));
 
 app.use("/tasks/*", authMiddleware);
 app.use("/tracker/*", authMiddleware);

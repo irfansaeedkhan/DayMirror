@@ -44,7 +44,7 @@ export function AppShell({ children, onNewTask }: AppShellProps) {
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
         <div className="app-container flex h-14 items-center gap-4 lg:h-16 lg:gap-6">
           <Link href="/planner" className="text-base font-semibold tracking-tight lg:text-lg">
-            Chronos
+            DayMirror
           </Link>
 
           <nav className="flex items-center rounded-full bg-secondary p-1 text-sm lg:text-base">

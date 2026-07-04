@@ -3,8 +3,8 @@ import Link from "next/link";
 import { SignupForm } from "@/components/auth/signup-form";
 
 export const metadata: Metadata = {
-  title: "Sign up — Chronos",
-  description: "Create a free Chronos account — plan your day, track each hour.",
+  title: "Sign up — DayMirror",
+  description: "Create a free DayMirror account — reflect on every hour.",
 };
 
 export default function SignupPage() {
@@ -13,7 +13,7 @@ export default function SignupPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="space-y-2 text-center">
           <Link href="/" className="text-lg font-semibold tracking-tight">
-            Chronos
+            DayMirror
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight lg:text-3xl">Start free</h1>
           <p className="text-muted-foreground">See where your day actually went.</p>

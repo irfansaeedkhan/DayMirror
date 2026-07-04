@@ -4,8 +4,8 @@ import { Suspense } from "react";
 import { LoginForm } from "@/components/auth/login-form";
 
 export const metadata: Metadata = {
-  title: "Sign in — Chronos",
-  description: "Sign in to Chronos — see where your day actually went.",
+  title: "Sign in — DayMirror",
+  description: "Sign in to DayMirror — see where your day actually went.",
 };
 
 export default function LoginPage() {
@@ -14,7 +14,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="space-y-2 text-center">
           <Link href="/" className="text-lg font-semibold tracking-tight">
-            Chronos
+            DayMirror
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight lg:text-3xl">Welcome back</h1>
           <p className="text-muted-foreground">Sign in to plan your day and track each hour.</p>

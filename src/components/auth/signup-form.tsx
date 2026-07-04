@@ -35,7 +35,7 @@ export function SignupForm() {
       return;
     }
 
-    toast.success("Welcome to Chronos");
+    toast.success("Welcome to DayMirror");
     router.push("/planner");
     router.refresh();
   }

@@ -10,7 +10,7 @@ export const THEMES: { id: Theme; label: string; swatch: string }[] = [
   { id: "dark", label: "Dark", swatch: "#111418" },
 ];
 
-const STORAGE_KEY = "chronos-theme";
+const STORAGE_KEY = "daymirror-theme";
 
 type ThemeContextValue = {
   theme: Theme;
