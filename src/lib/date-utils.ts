@@ -1,7 +1,17 @@
-/** Parse YYYY-MM-DD as local calendar date (no UTC timezone shift). */
-export function parseDateOnly(dateStr: string): Date {
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Parse YYYY-MM-DD as local calendar date (no UTC timezone shift). Returns `null` for invalid input. */
+export function parseDateOnly(dateStr: string): Date | null {
+  if (!DATE_RE.test(dateStr)) return null;
   const [year, month, day] = dateStr.split("-").map(Number);
-  return new Date(year, month - 1, day);
+  const d = new Date(year, month - 1, day);
+  if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+  return d;
+}
+
+/** Like `parseDateOnly` but falls back to `fallback` (default: today) on invalid input. */
+export function parseDateOnlyOrFallback(dateStr: string, fallback?: Date): Date {
+  return parseDateOnly(dateStr) ?? fallback ?? new Date();
 }
 
 export function formatDateOnly(date: Date): string {

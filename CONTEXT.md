@@ -21,17 +21,17 @@ Next.js 16 App Router · Hono API at `/api/*` · Better Auth at `/api/auth/*` ·
 |---|---|
 | GitHub | `git@github.com:irfansaeedkhan/DayMirror.git` ✅ pushed |
 | Neon Postgres | ✅ project created — use **pooled** URL on Vercel, **direct** URL for `db:push` |
-| Vercel | 👉 **Next** — import DayMirror repo |
+| Vercel | ✅ `https://day-mirror-mocha.vercel.app` — Google OAuth working |
 
 ## Current phase (as of 2026-07-04)
 
 | Phase | Status |
 |---|---|
 | 0 Production hardening | ✅ Done |
-| 1 Auth (email + Google OAuth) | ✅ Done locally |
-| 2 Deploy (Vercel + Neon) | 👉 **In progress** — schema push + Vercel env |
-| 3 Landing page + SEO | Pending — hero: "Stop guessing where your day went." |
-| 4 Free beta launch | Pending |
+| 1 Auth (email + Google OAuth) | ✅ Done — production verified |
+| 2 Deploy (Vercel + Neon) | ✅ Live on Vercel free tier — domain deferred |
+| 3 Landing page + SEO | 🔄 **In progress** — `/` landing live, guides pending |
+| 4 Free beta launch | Pending — prep items 1–2 done, #3 spec ready |
 
 ## Must-read docs (in order)
 
@@ -42,7 +42,9 @@ Next.js 16 App Router · Hono API at `/api/*` · Better Auth at `/api/auth/*` ·
 5. `DESIGN-ETHICS.md` — Sunsama-aligned UI rules
 6. `SECURITY-AUDIT.md` — userId isolation (passed)
 7. `OAUTH-SETUP.md` — Google redirect URIs
-8. `AGENTS.md` — agent instructions
+8. `AGENTS.md` — agent instructions + workflow
+9. `.workflow/scope/phase-4-prep.md` — current agent slice
+10. `.workflow/specs/0001-tracker-hour-window/` — tracker window spec (next build)
 
 ## Local dev
 
@@ -50,18 +52,21 @@ Next.js 16 App Router · Hono API at `/api/*` · Better Auth at `/api/auth/*` ·
 yarn db:up          # Docker Postgres (local)
 yarn db:push --force
 cp .env.example .env.local   # secrets never committed
-yarn dev            # http://localhost:3000
+yarn dev            # http://localhost:3000 (yarn dev:clean if port busy)
+yarn db:push        # schema push (--force, includes feedback table)
 ```
 
 ## Deploy checklist (Phase 2)
 
 - [x] GitHub repo — DayMirror
-- [x] Neon project created
-- [ ] `yarn db:push` against Neon **direct** connection string
-- [ ] Vercel: import `irfansaeedkhan/DayMirror`, root = `.`
-- [ ] Vercel env: `DATABASE_URL` (pooled), `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, Google creds
-- [ ] Google Console: production redirect URI for Vercel URL
-- [ ] Redeploy after `BETTER_AUTH_URL` matches live URL
+- [x] Neon project + schema pushed
+- [x] Vercel deployed — `day-mirror-mocha.vercel.app`
+- [x] Google OAuth production working
+- [x] `BETTER_AUTH_URL` + Vercel URL auto-detect
+- [ ] Custom domain (`daymirror.com` / `.app`)
+- [ ] Sentry error tracking
+- [ ] Enable Vercel Analytics in dashboard
+- [ ] Neon PITR backup verified
 
 ## Intentionally deferred
 

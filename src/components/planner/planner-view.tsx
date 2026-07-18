@@ -8,7 +8,7 @@ import {
   format,
   subMonths,
 } from "date-fns";
-import { parseDateOnly } from "@/lib/date-utils";
+import { parseDateOnlyOrFallback } from "@/lib/date-utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MonthGrid } from "@/components/planner/month-grid";
@@ -26,7 +26,7 @@ export function PlannerView() {
   const searchParams = useSearchParams();
   const view = (searchParams.get("view") as View) || "month";
   const dateParam = searchParams.get("date");
-  const current = dateParam ? parseDateOnly(dateParam) : new Date();
+  const current = dateParam ? parseDateOnlyOrFallback(dateParam) : new Date();
 
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<TaskDto | null>(null);

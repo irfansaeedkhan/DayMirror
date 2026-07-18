@@ -14,13 +14,11 @@ import {
 } from "@/components/ui/command";
 import { useAttachTaskToHour, useUpsertHourLog } from "@/hooks/use-tracker";
 import { CATEGORY_COLORS } from "@/lib/constants";
+import { formatHourLabel } from "@/lib/hour-utils";
+import { partitionTasksForHour } from "@/lib/task-hour-match";
 import { cn } from "@/lib/utils";
 import type { HourLogDto, TaskDto } from "@/types/api";
 import { toast } from "sonner";
-
-function formatHour(h: number) {
-  return `${h % 12 || 12}:00 ${h < 12 ? "AM" : "PM"}`;
-}
 
 type TaskAttachDrawerProps = {
   open: boolean;
@@ -37,28 +35,9 @@ export function TaskAttachDrawer({ open, onClose, hour, date, tasks, log }: Task
   const [search, setSearch] = useState("");
   const attachedIds = new Set(log?.linkedTaskIds ?? []);
 
-  const { recommended, remaining } = useMemo(() => {
-    if (hour === null) return { recommended: [], remaining: tasks };
-    const slotStart = new Date(`${date}T00:00:00`);
-    slotStart.setHours(hour, 0, 0, 0);
-    const slotEnd = new Date(slotStart);
-    slotEnd.setHours(hour + 1);
-
-    const rec: TaskDto[] = [];
-    const rest: TaskDto[] = [];
-
-    for (const t of tasks) {
-      if (!t.startAt) {
-        rest.push(t);
-        continue;
-      }
-      const start = new Date(t.startAt);
-      const end = t.endAt ? new Date(t.endAt) : new Date(start.getTime() + 3600000);
-      if (start < slotEnd && end > slotStart) rec.push(t);
-      else rest.push(t);
-    }
-
-    return { recommended: rec, remaining: rest };
+  const { fitsHour, earlierToday, otherToday } = useMemo(() => {
+    if (hour === null) return { fitsHour: tasks, earlierToday: [], otherToday: [] };
+    return partitionTasksForHour(tasks, hour, date);
   }, [tasks, hour, date]);
 
   const filterTasks = (items: TaskDto[]) => {
@@ -84,32 +63,42 @@ export function TaskAttachDrawer({ open, onClose, hour, date, tasks, log }: Task
     }
   };
 
+  const filteredEarlier = filterTasks(earlierToday);
+  const filteredFits = filterTasks(fitsHour);
+  const filteredOther = filterTasks(otherToday);
+  const hasVisible =
+    filteredEarlier.length + filteredFits.length + filteredOther.length > 0;
+
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
       <SheetContent side="right" className="w-full sm:max-w-md flex flex-col p-0">
-        <SheetHeader className="px-6 pt-6">
+        <SheetHeader className="px-6 pt-6 pb-2">
           <SheetTitle className="flex items-center gap-2">
             <Link2 className="size-4" />
-            Attach task to time block
+            Attach task to this hour
           </SheetTitle>
-          {hour !== null && <p className="text-sm text-muted-foreground">{formatHour(hour)}</p>}
+          {hour !== null && (
+            <p className="text-sm text-muted-foreground">{formatHourLabel(hour)}</p>
+          )}
         </SheetHeader>
 
-        <Command className="flex-1 border-t mt-4" shouldFilter={false}>
+        <Command
+          className="flex-1 overflow-hidden bg-transparent [&_[cmdk-input-wrapper]]:mx-6 [&_[cmdk-input-wrapper]]:mb-4 [&_[cmdk-input-wrapper]]:flex [&_[cmdk-input-wrapper]]:h-11 [&_[cmdk-input-wrapper]]:items-center [&_[cmdk-input-wrapper]]:gap-2.5 [&_[cmdk-input-wrapper]]:rounded-xl [&_[cmdk-input-wrapper]]:border [&_[cmdk-input-wrapper]]:border-border/60 [&_[cmdk-input-wrapper]]:bg-secondary/50 [&_[cmdk-input-wrapper]]:px-3.5 [&_[cmdk-input-wrapper]]:border-b-0 [&_[cmdk-input-wrapper]_svg]:size-4 [&_[cmdk-input-wrapper]_svg]:shrink-0 [&_[cmdk-input-wrapper]_svg]:opacity-70 [&_[cmdk-input]]:h-11 [&_[cmdk-input]]:py-0 [&_[cmdk-input]]:text-sm"
+          shouldFilter={false}
+        >
           <CommandInput
             placeholder="Search tasks..."
             value={search}
             onValueChange={setSearch}
-            className="h-11"
           />
-          <CommandList className="max-h-none flex-1 px-2 pb-4">
+          <CommandList className="max-h-none flex-1 px-4 pb-4">
             {tasks.length === 0 && (
               <CommandEmpty>No tasks today. Plan one in the Planner first.</CommandEmpty>
             )}
 
-            {filterTasks(recommended).length > 0 && (
-              <CommandGroup heading="Recommended for this window">
-                {filterTasks(recommended).map((t) => (
+            {filteredFits.length > 0 && (
+              <CommandGroup heading="Scheduled for this hour">
+                {filteredFits.map((t) => (
                   <TaskCommandItem
                     key={t.id}
                     task={t}
@@ -121,9 +110,24 @@ export function TaskAttachDrawer({ open, onClose, hour, date, tasks, log }: Task
               </CommandGroup>
             )}
 
-            {filterTasks(remaining).length > 0 && (
-              <CommandGroup heading="Remaining agenda">
-                {filterTasks(remaining).map((t) => (
+            {filteredEarlier.length > 0 && (
+              <CommandGroup heading="Earlier today — catch up now">
+                {filteredEarlier.map((t) => (
+                  <TaskCommandItem
+                    key={t.id}
+                    task={t}
+                    isAttached={attachedIds.has(t.id)}
+                    onPick={handlePick}
+                    disabled={attach.isPending}
+                    badge="Missed slot"
+                  />
+                ))}
+              </CommandGroup>
+            )}
+
+            {filteredOther.length > 0 && (
+              <CommandGroup heading="Other tasks today">
+                {filteredOther.map((t) => (
                   <TaskCommandItem
                     key={t.id}
                     task={t}
@@ -135,7 +139,7 @@ export function TaskAttachDrawer({ open, onClose, hour, date, tasks, log }: Task
               </CommandGroup>
             )}
 
-            {tasks.length > 0 && filterTasks(recommended).length === 0 && filterTasks(remaining).length === 0 && (
+            {tasks.length > 0 && !hasVisible && (
               <CommandEmpty>No tasks match your search.</CommandEmpty>
             )}
           </CommandList>
@@ -150,11 +154,13 @@ function TaskCommandItem({
   isAttached,
   onPick,
   disabled,
+  badge,
 }: {
   task: TaskDto;
   isAttached: boolean;
   onPick: (t: TaskDto) => void;
   disabled: boolean;
+  badge?: string;
 }) {
   return (
     <CommandItem
@@ -170,9 +176,15 @@ function TaskCommandItem({
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium truncate">{task.title}</div>
         {task.startAt && (
-          <div className="text-[11px] text-muted-foreground">{format(new Date(task.startAt), "h:mm a")}</div>
+          <div className="text-[11px] text-muted-foreground">
+            {format(new Date(task.startAt), "h:mm a")}
+            {task.endAt ? ` – ${format(new Date(task.endAt), "h:mm a")}` : ""}
+          </div>
         )}
       </div>
+      {badge && !isAttached && (
+        <span className="text-[10px] text-muted-foreground shrink-0">{badge}</span>
+      )}
       {isAttached && <Check className="size-4 text-primary shrink-0" />}
     </CommandItem>
   );

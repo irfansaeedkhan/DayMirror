@@ -1,7 +1,7 @@
 # Chronos — userId security audit
 
-> Audit date: 2026-07-04  
-> Verdict: **PASS** (with 2 fixes applied)
+> Audit date: 2026-07-04 (updated 2026-07-04 — feedback module + security pass)  
+> Verdict: **PASS**
 
 Every API route goes through `authMiddleware` → `c.get("userId")` from Better Auth session.  
 Repositories must always filter by `userId`. Services must verify ownership before mutations.
@@ -15,6 +15,7 @@ Repositories must always filter by `userId`. Services must verify ownership befo
 | Tasks | `/api/tasks/*` | `c.get("userId")` on every handler |
 | Tracker | `/api/tracker/*` | `c.get("userId")` on every handler |
 | Analytics | `/api/analytics/*` | `c.get("userId")` on every handler |
+| Feedback | `/api/feedback/*` | `c.get("userId")` on every handler |
 | Auth | `/api/auth/*` | Better Auth (separate) |
 
 ---
@@ -49,6 +50,12 @@ Repositories must always filter by `userId`. Services must verify ownership befo
 |---|---|---|
 | `listLedger` | ✅ hourLogs.userId | |
 | `listTasksForContext` | ✅ tasks.userId | |
+
+### Feedback (`feedback.repository.ts`)
+
+| Method | userId filter | Notes |
+|---|---|---|
+| `create` | ✅ sets userId on insert | Insert-only; no read/update/delete endpoints yet |
 
 ---
 

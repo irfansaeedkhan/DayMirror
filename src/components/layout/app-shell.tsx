@@ -1,26 +1,36 @@
 "use client";
 
+import { useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Check, LogOut, Moon, Plus, Sun, User } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { ChevronDown, Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { signOut, useSession } from "@/lib/auth-client";
-import { THEMES, useTheme, type Theme } from "@/lib/theme";
-import { cn } from "@/lib/utils";
-
-const NAV = [
-  { href: "/planner", label: "Planner" },
-  { href: "/tracker", label: "Tracker" },
-  { href: "/analytics", label: "Analytics" },
-] as const;
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { FeedbackModal } from "@/components/feedback/feedback-modal";
+import { SettingsModal } from "@/components/settings/settings-modal";
+import { AiGoalComingSoonModal } from "@/components/tasks/ai-goal-coming-soon-modal";
+import { useResponsiveSidebarOpen } from "@/hooks/use-responsive-sidebar";
+import { getPageTitle } from "@/lib/app-nav";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -29,93 +39,81 @@ type AppShellProps = {
 
 export function AppShell({ children, onNewTask }: AppShellProps) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { theme, setTheme, resolved } = useTheme();
-  const { data: session } = useSession();
-
-  async function handleSignOut() {
-    await signOut();
-    router.push("/login");
-    router.refresh();
-  }
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [aiComingSoonOpen, setAiComingSoonOpen] = useState(false);
+  const pageTitle = getPageTitle(pathname);
+  const { open: sidebarOpen, onOpenChange: onSidebarOpenChange } = useResponsiveSidebarOpen();
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
-        <div className="app-container flex h-14 items-center gap-4 lg:h-16 lg:gap-6">
-          <Link href="/planner" className="text-base font-semibold tracking-tight lg:text-lg">
-            DayMirror
-          </Link>
-
-          <nav className="flex items-center rounded-full bg-secondary p-1 text-sm lg:text-base">
-            {NAV.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "cursor-pointer rounded-full px-3 py-1.5 transition lg:px-4 lg:py-2",
-                  pathname.startsWith(item.href)
-                    ? "bg-card shadow-elevated text-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="ml-auto flex items-center gap-1">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full" aria-label="Account">
-                  <User className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="rounded-xl">
-                {session?.user && (
-                  <>
-                    <DropdownMenuLabel className="font-normal">
-                      <p className="text-sm font-medium">{session.user.name}</p>
-                      <p className="text-xs text-muted-foreground">{session.user.email}</p>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer gap-2 rounded-lg">
-                  <LogOut className="size-4" />
-                  Sign out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full" aria-label="Theme">
-                  {resolved === "dark" ? <Moon className="size-4" /> : <Sun className="size-4" />}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="rounded-xl">
-                <DropdownMenuLabel>Theme</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {THEMES.map((t) => (
-                  <DropdownMenuItem key={t.id} onClick={() => setTheme(t.id as Theme)} className="gap-2 rounded-lg">
-                    <span className="size-4 rounded-full border border-border" style={{ background: t.swatch }} />
-                    <span className="flex-1">{t.label}</span>
-                    {theme === t.id && <Check className="size-4" />}
+    <TooltipProvider delayDuration={0}>
+      <SidebarProvider
+        open={sidebarOpen}
+        onOpenChange={onSidebarOpenChange}
+        className="app-shell-canvas"
+        style={
+          {
+            "--sidebar-width": "13.5rem",
+            "--sidebar-width-icon": "3.25rem",
+          } as CSSProperties
+        }
+      >
+        <AppSidebar
+          onOpenSettings={() => setSettingsOpen(true)}
+          onOpenFeedback={() => setFeedbackOpen(true)}
+        />
+        <SidebarInset className="app-main-panel">
+          <header className="sticky top-0 z-30 flex h-11 shrink-0 items-center gap-2 border-b border-border/40 bg-surface-panel/90 px-3 backdrop-blur-md sm:gap-3 sm:px-4">
+            <SidebarTrigger className="-ml-1" size="icon-sm" variant="ghost" />
+            <Breadcrumb className="min-w-0">
+              <BreadcrumbList>
+                <BreadcrumbItem className="hidden sm:inline-flex">
+                  <BreadcrumbLink asChild>
+                    <Link href="/tracker">DayMirror</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden sm:inline-flex" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="truncate">{pageTitle}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <div className="ml-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" size="sm">
+                    <Plus />
+                    <span className="hidden sm:inline">New</span>
+                    <ChevronDown className="size-3.5 opacity-70" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onSelect={() => onNewTask?.()}
+                  >
+                    <Plus className="size-4" />
+                    New task
                   </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onSelect={() => setAiComingSoonOpen(true)}
+                  >
+                    <Sparkles className="size-4" />
+                    AI goal plan
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </header>
 
-            <Button onClick={onNewTask} className="gap-1.5 rounded-full" size="default">
-              <Plus className="size-4 lg:size-5" />
-              <span className="hidden sm:inline">New Task</span>
-            </Button>
-          </div>
-        </div>
-      </header>
+          <main className="flex-1 px-3 py-4 sm:px-4 sm:py-6 lg:px-6 lg:py-8">{children}</main>
+        </SidebarInset>
 
-      <main className="app-container flex-1 py-6 lg:py-8">{children}</main>
-    </div>
+        <FeedbackModal open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+        <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
+        <AiGoalComingSoonModal open={aiComingSoonOpen} onOpenChange={setAiComingSoonOpen} />
+      </SidebarProvider>
+    </TooltipProvider>
   );
 }

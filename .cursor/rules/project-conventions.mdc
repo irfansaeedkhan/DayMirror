@@ -15,6 +15,7 @@ Read before creating files or modules:
 ## Auth work
 
 Load skills from `chronos/.agents/skills/`:
+
 - `better-auth-best-practices`
 - `better-auth-security-best-practices`
 - `create-auth-skill`

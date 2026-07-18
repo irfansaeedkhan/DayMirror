@@ -25,7 +25,7 @@ export function SignupForm() {
       name: name.trim(),
       email: email.trim(),
       password,
-      callbackURL: "/planner",
+      callbackURL: "/tracker",
     });
 
     setPending(false);
@@ -36,13 +36,13 @@ export function SignupForm() {
     }
 
     toast.success("Welcome to DayMirror");
-    router.push("/planner");
+    router.push("/tracker");
     router.refresh();
   }
 
   return (
     <div className="space-y-4">
-      <GoogleSignInButton callbackURL="/planner" label="Sign up with Google" />
+      <GoogleSignInButton callbackURL="/tracker" label="Sign up with Google" />
       <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">Name</Label>

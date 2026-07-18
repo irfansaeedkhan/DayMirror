@@ -2,7 +2,9 @@ import { useMemo } from "react";
 import { format } from "date-fns";
 import type { TaskDto } from "@/types/api";
 
-export function useTaskSuggestion(tasks: TaskDto[], date: Date, hour: number): TaskDto | null {
+type TaskLike = TaskDto & { occurrenceDate?: string };
+
+export function useTaskSuggestion(tasks: TaskLike[], date: Date, hour: number): TaskDto | null {
   return useMemo(() => {
     const slotStart = new Date(date);
     slotStart.setHours(hour, 0, 0, 0);
@@ -11,7 +13,8 @@ export function useTaskSuggestion(tasks: TaskDto[], date: Date, hour: number): T
     const dateStr = format(date, "yyyy-MM-dd");
 
     for (const task of tasks) {
-      if (task.date !== dateStr || !task.startAt) continue;
+      const onDay = task.occurrenceDate ?? task.date;
+      if (onDay !== dateStr || !task.startAt) continue;
       const start = new Date(task.startAt);
       const end = task.endAt ? new Date(task.endAt) : new Date(start.getTime() + 60 * 60 * 1000);
       if (start < slotEnd && end > slotStart) return task;

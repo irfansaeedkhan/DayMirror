@@ -1,0 +1,36 @@
+---
+description: Load UI/UX skills hub and skills in order before any design work
+globs: "**/*.{tsx,css}"
+alwaysApply: false
+---
+
+# UI / UX design workflow
+
+Before designing, restyling, or changing visual affordance of any component:
+
+1. **Read hub (mandatory first)**
+   - `chronos/.agents/skills/ui-ux/SKILL.md` — skill load order + Pro Max scripts
+
+2. **Load skills in order (read each SKILL.md)**
+   - `ui-ux-pro-max` — design intelligence, palettes, UX guidelines
+   - `frontend-design` — distinctive production-grade aesthetics
+   - `bencium-controlled-ux-designer` — accessibility, responsive, motion
+   - `web-design-guidelines` — Vercel UX/a11y audit rules
+   - `vercel-react-best-practices` — React/Next performance
+   - `vercel-composition-patterns` — component architecture
+   - `accesslint/audit` — WCAG contrast and a11y (when auditing)
+   - `vercel-react-native-skills` — mobile only
+
+3. **Project standards**
+   - `chronos/DESIGN-ETHICS.md`
+   - `chronos/src/app/globals.css` — theme/mood colors only via `var(--*)`
+
+4. **Run Pro Max when designing** (from `chronos/`):
+   ```bash
+   python .agents/skills/ui-ux-pro-max/scripts/search.py "<query>" --domain ux
+   ```
+
+5. **Constraints**
+   - Do not change unrelated UI unless the user asks
+   - No new colors outside `globals.css` variables
+   - Match DESIGN-ETHICS pill/nav patterns

@@ -1,0 +1,6 @@
+{
+  "artifactBase": ".workflow",
+  "scope": ".workflow/scope",
+  "specs": ".workflow/specs",
+  "reviews": ".workflow/reviews"
+}

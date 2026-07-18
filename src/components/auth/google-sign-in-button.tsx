@@ -11,11 +11,15 @@ type GoogleSignInButtonProps = {
   label?: string;
 };
 
+const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED === "true";
+
 export function GoogleSignInButton({
-  callbackURL = "/planner",
+  callbackURL = "/tracker",
   label = "Continue with Google",
 }: GoogleSignInButtonProps) {
   const [pending, setPending] = useState(false);
+
+  if (!googleEnabled) return null;
 
   async function handleGoogleSignIn() {
     setPending(true);

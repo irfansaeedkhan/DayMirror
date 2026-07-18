@@ -5,9 +5,9 @@ import * as React from "react";
 export type Theme = "system" | "light" | "dark";
 
 export const THEMES: { id: Theme; label: string; swatch: string }[] = [
-  { id: "system", label: "System", swatch: "linear-gradient(135deg,#fff 50%,#111 50%)" },
-  { id: "light", label: "Light", swatch: "#f7f7f9" },
-  { id: "dark", label: "Dark", swatch: "#111418" },
+  { id: "system", label: "System", swatch: "var(--swatch-system)" },
+  { id: "light", label: "Light", swatch: "var(--swatch-light)" },
+  { id: "dark", label: "Dark", swatch: "var(--swatch-dark)" },
 ];
 
 const STORAGE_KEY = "daymirror-theme";
@@ -36,16 +36,16 @@ function applyTheme(theme: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = React.useState<Theme>("system");
+  const [theme, setThemeState] = React.useState<Theme>("light");
 
   React.useEffect(() => {
-    const stored = (localStorage.getItem(STORAGE_KEY) as Theme | null) ?? "system";
+    const stored = (localStorage.getItem(STORAGE_KEY) as Theme | null) ?? "light";
     setThemeState(stored);
     applyTheme(stored);
 
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const onChange = () => {
-      const stored = (localStorage.getItem(STORAGE_KEY) as Theme | null) ?? "system";
+      const stored = (localStorage.getItem(STORAGE_KEY) as Theme | null) ?? "light";
       if (stored === "system") applyTheme("system");
     };
     mq.addEventListener("change", onChange);

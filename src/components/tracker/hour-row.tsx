@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Link2, Sparkles, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { ChevronsUp, Link2, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { useAttachTaskToHour, useUpsertHourLog } from "@/hooks/use-tracker";
 import { MOOD_CONFIG } from "@/lib/constants";
+import { MODERATE_XP_DEFAULT, resolveHourXp, xpForMoodSelection } from "@/lib/hour-xp";
 import { cn } from "@/lib/utils";
 import type { HourLogDto, HourMood, TaskDto } from "@/types/api";
 import { toast } from "sonner";
@@ -15,6 +17,34 @@ const MOODS = Object.entries(MOOD_CONFIG).map(([value, cfg]) => ({ value: value 
 
 function formatHour(h: number) {
   return `${h % 12 || 12}:00 ${h < 12 ? "AM" : "PM"}`;
+}
+
+function collapsedSummary(description: string | null | undefined, moodLabel: string | null) {
+  const trimmed = description?.trim();
+  if (trimmed) return { text: trimmed, muted: false };
+  if (moodLabel) return { text: `Logged as ${moodLabel}`, muted: false };
+  return { text: "Tap to log this hour…", muted: true };
+}
+
+function HourStatusDot({
+  hasLog,
+  isCurrent,
+}: {
+  hasLog: boolean;
+  isCurrent: boolean;
+}) {
+  return (
+    <span
+      className={cn(
+        "block size-2.5 shrink-0 rounded-full ring-4",
+        isCurrent
+          ? "bg-primary ring-primary/15"
+          : hasLog
+            ? "bg-muted-foreground/45 ring-background"
+            : "bg-border ring-background",
+      )}
+    />
+  );
 }
 
 type HourRowProps = {
@@ -46,12 +76,25 @@ export function HourRow({
   const [mood, setMood] = useState<HourMood | null>(log?.mood ?? null);
   const [productivity, setProductivity] = useState(log?.productivity ?? 50);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     setDesc(log?.description ?? "");
     setMood(log?.mood ?? null);
     setProductivity(log?.productivity ?? 50);
   }, [log?.id, log?.description, log?.mood, log?.productivity]);
+
+  useEffect(() => {
+    if (!expanded) return;
+    const id = window.setTimeout(() => {
+      const el = textareaRef.current;
+      if (!el) return;
+      el.focus();
+      const end = el.value.length;
+      el.setSelectionRange(end, end);
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [expanded, log?.description]);
 
   const persist = useCallback(
     async (next: { description?: string | null; mood?: HourMood | null; productivity?: number }) => {
@@ -71,13 +114,23 @@ export function HourRow({
     [log?.id, date, hour, desc, mood, productivity, upsert],
   );
 
+  const persistRef = useRef(persist);
+  persistRef.current = persist;
+
   const queueSave = (next: Parameters<typeof persist>[0]) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => persist(next), 500);
+    saveTimer.current = setTimeout(() => persistRef.current(next), 500);
   };
 
+  useEffect(() => () => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+  }, []);
+
   const attachedTasks = tasks.filter((t) => (log?.linkedTaskIds ?? []).includes(t.id));
-  const moodInfo = mood ? MOOD_CONFIG[mood] : null;
+  const effectiveMood = mood ?? log?.mood ?? null;
+  const moodInfo = effectiveMood ? MOOD_CONFIG[effectiveMood] : null;
+  const hourXp = resolveHourXp(effectiveMood, productivity);
+  const summary = collapsedSummary(log?.description, moodInfo?.label ?? null);
 
   const linkSuggestion = async () => {
     if (!suggestion) return;
@@ -97,76 +150,127 @@ export function HourRow({
   };
 
   return (
-    <div className="flex items-start gap-3">
-      <div className="w-[60px] pt-3 text-right">
-        <div className={cn("text-xs tabular-nums font-medium", isCurrent ? "text-primary" : "text-muted-foreground")}>
-          {formatHour(hour)}
-        </div>
-      </div>
-      <div className="relative pt-3.5">
-        <span
-          className={cn(
-            "block size-2.5 rounded-full ring-4",
-            isCurrent ? "bg-primary ring-primary/15" : log ? "ring-background" : "bg-border ring-background",
-          )}
-          style={log && !isCurrent ? { background: moodInfo?.color } : undefined}
-        />
-      </div>
-
-      <div
-        className={cn(
-          "flex-1 rounded-2xl bg-card shadow-elevated transition-all",
-          expanded ? "p-4" : "px-4 py-2.5 cursor-pointer hover:bg-accent/40",
-          isCurrent && "ring-1 ring-primary/30",
-        )}
-        onClick={!expanded ? onToggle : undefined}
-        onKeyDown={!expanded ? (e) => e.key === "Enter" && onToggle() : undefined}
-        role={!expanded ? "button" : undefined}
-        tabIndex={!expanded ? 0 : undefined}
+    <div
+      className={cn("min-w-0 w-full", moodInfo && "hour-card-wrap")}
+      style={
+        moodInfo
+          ? ({ "--hour-mood-color": moodInfo.color } as CSSProperties)
+          : undefined
+      }
+    >
+      <Collapsible
+        open={expanded}
+        onOpenChange={(open) => {
+          if (open !== expanded) onToggle();
+        }}
       >
-        {!expanded ? (
-          <div className="flex items-center gap-3 min-h-[28px]">
-            {log?.description ? (
-              <span className="text-sm truncate flex-1">{log.description}</span>
-            ) : (
-              <span className="text-sm text-muted-foreground/70 flex-1">Tap to log this hour…</span>
-            )}
-            {moodInfo && (
-              <span
-                className="text-[11px] font-medium px-2.5 py-0.5 rounded-full shrink-0"
-                style={{ background: moodInfo.bg, color: moodInfo.color }}
+        <div
+          className={cn(
+            "hour-card-surface rounded-2xl bg-card shadow-elevated transition-colors",
+            expanded ? "px-3 pt-3 pb-4 sm:px-4 sm:pt-4 sm:pb-5" : "px-3 py-2.5 sm:px-4 sm:py-3",
+            isCurrent && !moodInfo && "ring-1 ring-primary/30",
+          )}
+        >
+          {!expanded ? (
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                className="flex w-full cursor-pointer flex-col gap-2 text-left hover:opacity-90"
               >
-                {moodInfo.label}
-              </span>
-            )}
-            {attachedTasks.length > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground shrink-0">
-                <Link2 className="size-3" />
-                {attachedTasks.length}
-              </span>
-            )}
-          </div>
-        ) : (
-          <>
-            <div className="flex items-center gap-2 mb-2">
-              <span className={cn("text-xs uppercase tracking-wider font-semibold", isCurrent ? "text-primary" : "text-muted-foreground")}>
-                {isCurrent ? "Now" : formatHour(hour)}
-              </span>
-              <button type="button" onClick={onToggle} className="ml-auto text-xs text-muted-foreground hover:text-foreground">
-                Collapse
+                <div className="flex items-center gap-2">
+                  <HourStatusDot hasLog={!!log} isCurrent={isCurrent} />
+                  <span
+                    className={cn(
+                      "text-xs font-medium tabular-nums",
+                      isCurrent ? "text-primary" : "text-muted-foreground",
+                    )}
+                  >
+                    {formatHour(hour)}
+                  </span>
+                  <div className="ml-auto flex shrink-0 items-center gap-1.5">
+                    {hourXp !== null && (
+                      <span className="text-xs font-medium tabular-nums text-muted-foreground">
+                        {hourXp} XP
+                      </span>
+                    )}
+                    {attachedTasks.length > 0 && (
+                      <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground sm:text-[11px]">
+                        <Link2 className="size-3" />
+                        {attachedTasks.length}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <span
+                  className={cn(
+                    "min-w-0 truncate text-sm",
+                    summary.muted ? "text-muted-foreground/70" : "text-foreground",
+                  )}
+                >
+                  {summary.text}
+                </span>
+                {moodInfo && (
+                  <span
+                    className="mood-pill w-fit rounded-full px-2.5 py-0.5 text-[10px] font-medium sm:px-3 sm:text-[11px]"
+                    style={{
+                      background: moodInfo.muted,
+                      color: moodInfo.foreground,
+                    }}
+                  >
+                    {moodInfo.label}
+                  </span>
+                )}
               </button>
-            </div>
+            </CollapsibleTrigger>
+          ) : (
+            <CollapsibleContent forceMount className="data-[state=closed]:hidden">
+              <>
+                <div className="mb-2 flex items-center gap-2">
+                  <HourStatusDot hasLog={!!log} isCurrent={isCurrent} />
+                  {isCurrent ? (
+                    <div className="flex min-w-0 items-baseline gap-2">
+                      <span className="text-sm font-semibold tabular-nums text-primary">
+                        {formatHour(hour)}
+                      </span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-primary/80">
+                        Now
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {formatHour(hour)}
+                    </span>
+                  )}
+                  <div className="ml-auto flex shrink-0 items-center gap-3">
+                    {hourXp !== null && effectiveMood !== "moderate" && (
+                      <span className="text-xs font-medium tabular-nums text-muted-foreground">
+                        {hourXp} XP
+                      </span>
+                    )}
+                    <CollapsibleTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="shrink-0"
+                        aria-label="Collapse hour"
+                      >
+                        <ChevronsUp />
+                      </Button>
+                    </CollapsibleTrigger>
+                  </div>
+                </div>
 
             <Textarea
-              autoFocus={isCurrent}
+              ref={textareaRef}
               value={desc}
               onChange={(e) => {
                 setDesc(e.target.value);
                 queueSave({ description: e.target.value || null });
               }}
               placeholder="What are you doing?"
-              rows={2}
-              className="resize-none border-0 shadow-none px-0 focus-visible:ring-0 text-base"
+              rows={3}
+              className="min-h-[4.5rem resize-none whitespace-normal wrap-break-word border-0 px-0 text-sm font-normal shadow-none focus-visible:ring-0"
             />
 
             {suggestion && (
@@ -183,7 +287,7 @@ export function HourRow({
               </button>
             )}
 
-            <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
               {MOODS.map((m) => {
                 const active = mood === m.value;
                 return (
@@ -193,45 +297,68 @@ export function HourRow({
                     onClick={() => {
                       const next = active ? null : m.value;
                       setMood(next);
-                      persist({ mood: next });
+                      if (next === null) {
+                        persist({ mood: null });
+                        return;
+                      }
+                      const nextXp = next === "moderate" ? MODERATE_XP_DEFAULT : xpForMoodSelection(next);
+                      setProductivity(nextXp);
+                      persist({ mood: next, productivity: nextXp });
                     }}
                     className={cn(
-                      "text-[11px] font-medium px-3 py-1 rounded-full transition",
-                      active ? "" : "bg-secondary text-secondary-foreground hover:bg-accent",
+                      "inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-medium transition sm:px-3.5 sm:text-[11px]",
+                      !active && "border-transparent bg-secondary text-secondary-foreground hover:bg-hover",
                     )}
-                    style={active ? { background: m.color, color: "white" } : undefined}
+                    style={
+                      active
+                        ? {
+                            background: m.muted,
+                            color: m.foreground,
+                            borderColor: `color-mix(in oklch, ${m.color} 35%, transparent)`,
+                          }
+                        : undefined
+                    }
                   >
                     {m.label}
                   </button>
                 );
               })}
-              <Button type="button" variant="outline" size="sm" onClick={onOpenDrawer} className="ml-auto rounded-full text-[11px] h-7 gap-1.5">
-                <Link2 className="size-3" /> Attach task
-              </Button>
             </div>
 
-            <div className="flex items-center gap-3 mt-3">
-              <span className="text-[11px] text-muted-foreground w-20">Productivity</span>
-              <Slider
-                value={[productivity]}
-                onValueChange={(v) => {
-                  setProductivity(v[0]);
-                  queueSave({ productivity: v[0] });
-                }}
-                min={0}
-                max={100}
-                step={5}
-                className="flex-1"
-              />
-              <span className="text-xs tabular-nums w-10 text-right">{productivity}%</span>
-            </div>
+            {effectiveMood === "moderate" && (
+              <div className="mt-3 flex items-center gap-2 sm:gap-3">
+                <span className="w-14 shrink-0 text-[10px] text-muted-foreground sm:w-16 sm:text-[11px]">On track</span>
+                <Slider
+                  value={[productivity]}
+                  onValueChange={(v) => {
+                    setProductivity(v[0]);
+                    queueSave({ productivity: v[0] });
+                  }}
+                  min={0}
+                  max={100}
+                  step={5}
+                  className="flex-1"
+                />
+                <span className="w-12 shrink-0 text-right text-xs font-medium tabular-nums text-muted-foreground sm:w-14">
+                  {productivity} XP
+                </span>
+              </div>
+            )}
 
-            {attachedTasks.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-border/50 flex flex-wrap gap-1.5">
+            <div className="-mx-3 mt-3 border-t border-border/50 px-3 pt-3 sm:-mx-4 sm:px-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={onOpenDrawer}
+                  className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-border/60 bg-card px-2.5 py-1 text-[10px] font-medium text-foreground shadow-elevated transition-colors hover:bg-hover sm:px-3 sm:text-[11px]"
+                >
+                  <Link2 className="size-3.5 shrink-0" strokeWidth={2} />
+                  Attach task
+                </button>
                 {attachedTasks.map((t) => (
                   <span
                     key={t.id}
-                    className="inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-full"
+                    className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[11px]"
                     style={{
                       background: `color-mix(in oklch, var(--primary) 12%, transparent)`,
                     }}
@@ -254,10 +381,12 @@ export function HourRow({
                   </span>
                 ))}
               </div>
+            </div>
+                </>
+              </CollapsibleContent>
             )}
-          </>
-        )}
+          </div>
+        </Collapsible>
       </div>
-    </div>
   );
 }

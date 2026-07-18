@@ -10,6 +10,7 @@ export type ApiError = {
 
 export type TaskPriority = "low" | "medium" | "high";
 export type TaskRecurrence = "none" | "daily" | "weekdays" | "weekly" | "monthly";
+export type TaskTrackMode = "checkbox" | "quantity";
 export type HourMood = "success" | "moderate" | "wasted" | "in_progress" | "planning";
 
 export type TaskDto = {
@@ -26,6 +27,10 @@ export type TaskDto = {
   priority: TaskPriority;
   recurrence: TaskRecurrence;
   recurrenceUntil: string | null;
+  trackMode: TaskTrackMode;
+  targetValue: number | null;
+  unit: string | null;
+  stepValue: number;
   parentTaskId: string | null;
   completedAt: string | null;
   createdAt: string;
@@ -38,6 +43,15 @@ export type TaskCompletionDto = {
   taskId: string;
   occurrenceDate: string;
   completedAt: string;
+};
+
+export type TaskProgressDto = {
+  id: string;
+  userId: string;
+  taskId: string;
+  occurrenceDate: string;
+  amount: number;
+  updatedAt: string;
 };
 
 export type HourLogDto = {
@@ -74,9 +88,21 @@ export type CreateTaskPayload = {
   priority?: TaskPriority;
   recurrence?: TaskRecurrence;
   recurrenceUntil?: string | null;
+  trackMode?: TaskTrackMode;
+  targetValue?: number | null;
+  unit?: string | null;
+  stepValue?: number;
 };
 
 export type UpdateTaskPayload = Partial<CreateTaskPayload> & { id: string };
+
+export type SetProgressPayload = {
+  taskId: string;
+  occurrenceDate: string;
+  amount?: number;
+  delta?: number;
+  completeAll?: boolean;
+};
 
 export type UpsertHourLogPayload = {
   id?: string;
@@ -91,4 +117,80 @@ export type AttachTaskPayload = {
   hourLogId: string;
   taskId: string;
   attach: boolean;
+};
+
+export type TrackerSettingsDto = {
+  defaultStartHour: number;
+  defaultEndHour: number;
+};
+
+export type TrackerDayWindowDto = {
+  date: string;
+  startHour: number;
+  endHour: number;
+};
+
+export type EffectiveWindowDto = {
+  startHour: number;
+  endHour: number;
+  source: "user_settings" | "day_override";
+};
+
+export type TrackerSessionDto = {
+  id: string;
+  name: string;
+  startHour: number;
+  endHour: number;
+  sortOrder: number;
+};
+
+export type RestGapDto = {
+  startHour: number;
+  endHour: number;
+};
+
+export type TrackerViewMode = "simple" | "sessions";
+
+export type TrackerDayPayload = {
+  logs: HourLogDto[];
+  settings: TrackerSettingsDto;
+  dayWindow: TrackerDayWindowDto | null;
+  effectiveWindow: EffectiveWindowDto;
+  sessions: TrackerSessionDto[];
+  restGaps: RestGapDto[];
+  viewMode: TrackerViewMode;
+};
+
+export type CreateSessionPayload = {
+  date: string;
+  name?: string;
+  startHour: number;
+  endHour: number;
+};
+
+export type UpdateSessionPayload = {
+  id: string;
+  name?: string;
+  startHour?: number;
+  endHour?: number;
+};
+
+export type DayWindowPayload = {
+  date: string;
+  startHour: number;
+  endHour: number;
+};
+
+export type TrackerSettingsPayload = TrackerSettingsDto;
+
+export type FeedbackCategory = "bug" | "idea" | "other";
+
+export type FeedbackDto = {
+  id: string;
+  userId: string;
+  message: string;
+  rating: number | null;
+  category: FeedbackCategory;
+  page: string | null;
+  createdAt: string;
 };

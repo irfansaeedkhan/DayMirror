@@ -1,0 +1,55 @@
+{
+  "hub": ".agents/skills/ui-ux/SKILL.md",
+  "skills": [
+    {
+      "order": 1,
+      "name": "ui-ux-pro-max",
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "path": ".agents/skills/ui-ux-pro-max"
+    },
+    {
+      "order": 2,
+      "name": "frontend-design",
+      "source": "anthropics/skills",
+      "path": ".agents/skills/frontend-design"
+    },
+    {
+      "order": 3,
+      "name": "bencium-controlled-ux-designer",
+      "source": "bencium/bencium-claude-code-design-skill",
+      "path": ".agents/skills/bencium-controlled-ux-designer"
+    },
+    {
+      "order": 4,
+      "name": "web-design-guidelines",
+      "source": "vercel-labs/agent-skills",
+      "path": ".agents/skills/web-design-guidelines"
+    },
+    {
+      "order": 5,
+      "name": "vercel-react-best-practices",
+      "source": "vercel-labs/agent-skills",
+      "path": ".agents/skills/vercel-react-best-practices"
+    },
+    {
+      "order": 6,
+      "name": "vercel-composition-patterns",
+      "source": "vercel-labs/agent-skills",
+      "path": ".agents/skills/vercel-composition-patterns"
+    },
+    {
+      "order": 7,
+      "name": "accesslint",
+      "source": "accesslint/claude-marketplace",
+      "path": ".agents/skills/accesslint",
+      "subskills": ["audit", "scan", "diff"]
+    },
+    {
+      "order": 8,
+      "name": "vercel-react-native-skills",
+      "source": "vercel-labs/agent-skills",
+      "path": ".agents/skills/vercel-react-native-skills",
+      "note": "Mobile/React Native work only"
+    }
+  ]
+}

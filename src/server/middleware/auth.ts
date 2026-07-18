@@ -15,7 +15,15 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  * In development only, falls back to x-user-id / DEV_USER_ID for local testing.
  */
 export async function authMiddleware(c: Context<{ Variables: AppVariables }>, next: Next) {
-  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+  let session: Awaited<ReturnType<typeof auth.api.getSession>> | null = null;
+
+  try {
+    session = await auth.api.getSession({ headers: c.req.raw.headers });
+  } catch (error) {
+    if (!isProduction()) {
+      console.warn("[auth-middleware] Session lookup failed:", error);
+    }
+  }
 
   if (session?.user?.id) {
     c.set("userId", session.user.id);

@@ -60,6 +60,8 @@ function createAuth() {
     rateLimit: {
       enabled: isProduction(),
       storage: "memory",
+      window: 60,
+      max: 100,
     },
 
     advanced: {
@@ -80,3 +82,15 @@ export const auth = createAuth();
 
 export type Session = typeof auth.$Infer.Session;
 export type User = typeof auth.$Infer.Session.user;
+
+/** Best-effort session read for public routes — never throws when auth/DB is unavailable. */
+export async function getOptionalSession(requestHeaders: Headers) {
+  try {
+    return await auth.api.getSession({ headers: requestHeaders });
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[auth] Session lookup failed; treating as unauthenticated.", error);
+    }
+    return null;
+  }
+}

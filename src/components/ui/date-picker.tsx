@@ -16,7 +16,7 @@ type DatePickerProps = {
 };
 
 export function DatePicker({ value, onChange, placeholder = "Pick a date", className }: DatePickerProps) {
-  const selected = value ? parseDateOnly(value) : undefined;
+  const selected = value ? parseDateOnly(value) ?? undefined : undefined;
 
   return (
     <Popover>
@@ -31,7 +31,7 @@ export function DatePicker({ value, onChange, placeholder = "Pick a date", class
           )}
         >
           <CalendarIcon className="mr-2 size-4 lg:size-5 shrink-0 opacity-70" />
-          {value ? format(selected!, "PPP") : placeholder}
+          {selected ? format(selected, "PPP") : placeholder}
         </Button>
       </PopoverTrigger>
       <PopoverContent

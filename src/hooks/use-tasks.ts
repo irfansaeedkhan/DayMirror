@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { tasksApi } from "@/lib/api";
-import type { CreateTaskPayload, UpdateTaskPayload } from "@/types/api";
+import type { CreateTaskPayload, SetProgressPayload, UpdateTaskPayload } from "@/types/api";
 
 export function useTasksInRange(start: Date, end: Date) {
   return useQuery({
@@ -45,6 +45,14 @@ export function useToggleCompletion() {
       date: string;
       completed: boolean;
     }) => tasksApi.toggleCompletion(taskId, date, completed),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
+  });
+}
+
+export function useSetTaskProgress() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: SetProgressPayload) => tasksApi.setProgress(payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["tasks"] }),
   });
 }

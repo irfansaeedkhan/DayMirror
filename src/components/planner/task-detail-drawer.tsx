@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { format } from "date-fns";
 import { Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -10,14 +11,14 @@ import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { TaskProgressControls } from "@/components/tasks/task-progress-controls";
 import { useToggleCompletion } from "@/hooks/use-tasks";
 import { CATEGORY_COLORS, CATEGORY_LABELS } from "@/lib/constants";
-import { parseDateOnly } from "@/lib/date-utils";
+import { parseDateOnlyOrFallback } from "@/lib/date-utils";
 import type { TaskOccurrence } from "@/lib/recurrence";
 import type { TaskDto } from "@/types/api";
 import { cn } from "@/lib/utils";
@@ -40,16 +41,39 @@ function formatTimeLabel(iso: string) {
 
 export function TaskDetailDrawer({ task, onClose, onEdit }: TaskDetailDrawerProps) {
   const toggle = useToggleCompletion();
-  const completed = task
-    ? "occurrenceCompleted" in task
-      ? task.occurrenceCompleted
-      : !!task.completedAt
-    : false;
   const occurrenceDate = task
     ? "occurrenceDate" in task
       ? task.occurrenceDate
       : task.date
     : "";
+  const taskKey = task ? `${task.id}:${occurrenceDate}` : "";
+  const [progressOverride, setProgressOverride] = useState<{
+    key: string;
+    amount: number;
+    completed: boolean;
+  } | null>(null);
+  const baseCompleted = task
+    ? "occurrenceCompleted" in task
+      ? task.occurrenceCompleted
+      : !!task.completedAt
+    : false;
+  const completed =
+    progressOverride?.key === taskKey ? progressOverride.completed : baseCompleted;
+  const quantityTask =
+    task?.trackMode === "quantity" && task.targetValue != null
+      ? "occurrenceDate" in task
+        ? task
+        : ({
+            ...task,
+            occurrenceDate: task.date,
+            occurrenceCompleted: !!task.completedAt,
+            occurrenceAmount: 0,
+          } satisfies TaskOccurrence<TaskDto>)
+      : null;
+  const quantityAmount =
+    progressOverride?.key === taskKey
+      ? progressOverride.amount
+      : quantityTask?.occurrenceAmount ?? 0;
 
   return (
     <Sheet open={!!task} onOpenChange={(v) => !v && onClose()}>
@@ -64,13 +88,29 @@ export function TaskDetailDrawer({ task, onClose, onEdit }: TaskDetailDrawerProp
                 <Checkbox
                   className="mt-1 size-5"
                   checked={completed}
-                  onCheckedChange={(v) =>
-                    toggle.mutate({
+                  onCheckedChange={(v) => {
+                    const nextCompleted = !!v;
+                    toggle.mutate(
+                      {
                       taskId: task.id,
                       date: occurrenceDate,
-                      completed: !!v,
-                    })
-                  }
+                        completed: nextCompleted,
+                      },
+                      {
+                        onSuccess: () => {
+                          setProgressOverride({
+                            key: taskKey,
+                            amount: quantityTask
+                              ? nextCompleted
+                                ? quantityTask.targetValue ?? 0
+                                : 0
+                              : 0,
+                            completed: nextCompleted,
+                          });
+                        },
+                      },
+                    );
+                  }}
                 />
                 <div className="min-w-0 flex-1 space-y-2">
                   <SheetTitle
@@ -81,7 +121,8 @@ export function TaskDetailDrawer({ task, onClose, onEdit }: TaskDetailDrawerProp
                   >
                     {task.title}
                   </SheetTitle>
-                  <SheetDescription className="flex flex-wrap items-center gap-2 text-sm lg:text-base">
+                  {/* div not SheetDescription — Badge is a div; <p> cannot wrap block elements */}
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground lg:text-base">
                     <Badge variant={PRIORITY_VARIANT[task.priority] ?? "secondary"} className="capitalize rounded-full">
                       {task.priority}
                     </Badge>
@@ -90,7 +131,7 @@ export function TaskDetailDrawer({ task, onClose, onEdit }: TaskDetailDrawerProp
                         Repeats {task.recurrence}
                       </Badge>
                     )}
-                  </SheetDescription>
+                  </div>
                 </div>
               </div>
             </SheetHeader>
@@ -102,7 +143,7 @@ export function TaskDetailDrawer({ task, onClose, onEdit }: TaskDetailDrawerProp
                     Schedule
                   </h3>
                   <p className="text-base lg:text-lg">
-                    {format(parseDateOnly(occurrenceDate), "EEEE, MMMM d")}
+                    {format(parseDateOnlyOrFallback(occurrenceDate), "EEEE, MMMM d")}
                     {!task.allDay && task.startAt && (
                       <>
                         {" · "}
@@ -113,6 +154,29 @@ export function TaskDetailDrawer({ task, onClose, onEdit }: TaskDetailDrawerProp
                     {task.allDay && <span className="text-muted-foreground"> · All day</span>}
                   </p>
                 </section>
+
+                {quantityTask && (
+                  <>
+                    <Separator />
+                    <section className="space-y-3">
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:text-sm">
+                        Goal
+                      </h3>
+                      <TaskProgressControls
+                        task={quantityTask}
+                        compact
+                        amountOverride={quantityAmount}
+                        onProgressChange={(amount, nextCompleted) => {
+                          setProgressOverride({
+                            key: taskKey,
+                            amount,
+                            completed: nextCompleted,
+                          });
+                        }}
+                      />
+                    </section>
+                  </>
+                )}
 
                 <Separator />
 

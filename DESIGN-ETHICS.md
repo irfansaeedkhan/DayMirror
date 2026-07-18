@@ -26,7 +26,7 @@ Chronos says: *Plan your day. Track each hour. Know what actually happened.*
 | **One CTA per section** | "Start for free" / "Try for free" — consistent, rounded, confident | Single primary CTA: **Start free — no credit card** |
 | **Social proof** | Named quotes, logos, "trusted by professionals" | Beta user quotes first; logos only when real |
 | **Smooth motion** | Restrained transitions; drawers/sheets slide; nothing jarring | `animate-in` / `slide-in` on modals and sheets; no flashy animations |
-| **Rounded, soft UI** | `rounded-2xl` / `rounded-3xl` cards, pill buttons, pill nav | Match: `rounded-xl` inputs, `rounded-full` CTAs, `rounded-3xl` cards |
+| **Rounded, soft UI** | `rounded-2xl` / `rounded-3xl` cards, pill buttons, icon sidebar rail | Match: `rounded-xl` inputs, `rounded-full` CTAs, `rounded-3xl` cards |
 | **Cursor affordance** | Everything clickable feels clickable | `cursor-pointer` on all interactive elements |
 
 ---
@@ -34,9 +34,11 @@ Chronos says: *Plan your day. Track each hour. Know what actually happened.*
 ## Component-level rules
 
 ### Navigation
-- Pill-shaped tab switcher on muted background (`bg-secondary` + active `bg-card shadow`)
-- Sticky header with backdrop blur
-- Minimal items — Planner, Tracker, Analytics only
+- Left sidebar (shadcn), collapsible to icon rail on desktop; sheet drawer on mobile via `SidebarTrigger`
+- Slim sticky header: menu trigger, page title, **New Task** CTA only
+- Workspace items — Planner, Tracker, Analytics; future items disabled with **Soon** badge
+- Footer — Settings, Feedback, theme toggle, sign out
+- Session pill bar (tracker only) mirrors sidebar active style: `bg-secondary` track, active session = `bg-card shadow-elevated`
 
 ### Cards & surfaces
 - `shadow-elevated` for primary surfaces (not heavy drop shadows)
@@ -52,6 +54,12 @@ Chronos says: *Plan your day. Track each hour. Know what actually happened.*
 - Vertical timeline with hour labels left, content card right
 - Mood chips as soft colored pills — not loud badges
 - Current hour gets subtle ring highlight, not aggressive animation
+- **Sessions-first:** every day starts with one default session (`My day`) using the user's usual hours; add more via pill bar
+- Session pill bar mirrors main nav: `bg-secondary` track, active session = `bg-card shadow-elevated`
+- Each session in the timeline = subtle centered label on the hour rail (no card wrapper around hours)
+- Session edit drawer: bordered list with `divide-y` between sessions
+- Never say "block" in UI — always **session**
+- Hour window / "Save usual" bar is deprecated in tracker UI; session hours replace it
 
 ### Calendar
 - Today = filled primary circle on day number

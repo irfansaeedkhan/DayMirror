@@ -4,7 +4,7 @@
 > Owner: you. Review cadence: weekly. Cross items off — don't let this rot.
 >
 > Positioning in one line: **"See where your day actually went."**
-> The hourly reflection tracker is the hero. The planner/todo is supporting cast.
+> Category: **The Time Audit App** — see `BRAND.md` for full copy bank.
 
 ---
 
@@ -20,72 +20,130 @@ Goal: the codebase is safe to expose to the public internet.
 - [x] **Auth middleware hardened** — dev header fallback allowed ONLY in development; production requires a real session (Phase 1).
 - [x] **Error hygiene** — never leak stack traces or internals in API responses (already mostly done; verify).
 
-## Phase 1 — Real Auth (Week 1–2) `[IN PROGRESS]`
+## Phase 1 — Real Auth (Week 1–2) `[DONE]`
 
 Goal: multiple real users, each seeing only their own data.
 
-- [x] **Better Auth** with Drizzle adapter — email/password (+ Google when credentials added).
+- [x] **Better Auth** with Drizzle adapter — email/password + Google OAuth.
 - [x] Auth tables added to `src/db/schema/auth.ts`
 - [x] Replace `x-user-id` middleware with Better Auth session lookup (dev fallback kept)
 - [x] Login / signup pages (shadcn, calm aesthetic per DESIGN-ETHICS.md)
 - [x] Run `yarn db:push` after Docker/Neon is up (auth tables)
 - [x] Audit every repository query: confirm `userId` filter on every read/write — see `SECURITY-AUDIT.md`
 - [x] Sign-out in app shell
+- [x] Google OAuth — verified on production (`day-mirror-mocha.vercel.app`)
 - [ ] Forgot-password flow — deferred until domain + email provider (see note below)
-- [x] Google OAuth (Gmail sign-in) — verified locally
 
 > **Email deferred:** No verification or password-reset emails until we have a custom domain. Resend requires domain verification for production sends; beta uses Google OAuth + email/password without verification.
 
-## Phase 2 — Deploy (Week 2) `[READY — follow DEPLOY.md]`
+## Phase 2 — Deploy & Operate (Week 2) `[IN PROGRESS]`
 
-Goal: live URL, monitored, with real data safety.
+Goal: live URL, monitored, stable enough for strangers to sign up.
 
-> **Step-by-step guide:** [DEPLOY.md](./DEPLOY.md) — Vercel + Neon for first-time deployers.
+> **Guide:** [DEPLOY.md](./DEPLOY.md)
 
-- [x] **Database: Neon** — schema pushed (`user`, `tasks`, `hour_logs`, auth tables, etc.)
-- [ ] **Hosting: Vercel** — import `irfansaeedkhan/DayMirror`, root directory = `.`
-- [ ] **Domain** — buy the .com (or .app). Short, spellable. Set up before SEO work, never change it after.
-- [ ] **Sentry** (free tier) for error tracking, client + server.
-- [ ] **Vercel Analytics** or Plausible for traffic.
-- [ ] Backups: Neon PITR is on by default — verify retention settings.
-- [ ] Staging = Vercel preview deployments + Neon branch DB.
+### Done ✅
 
-## Phase 3 — Landing Page + SEO/AEO (Week 3)
+- [x] **GitHub** — `irfansaeedkhan/DayMirror`
+- [x] **Neon Postgres** — schema pushed (users, tasks, hour_logs, auth)
+- [x] **Vercel hosting** — live at `https://day-mirror-mocha.vercel.app`
+- [x] **Google OAuth** — production login working
+- [x] **Auth URL auto-detect** — `VERCEL_URL` fallback in `getAuthBaseURL()`
+- [x] **Vercel Web Analytics** — `<Analytics />` in layout (enable in dashboard)
+- [x] **Next.js 16 proxy** — `src/proxy.ts` route protection
+- [x] **Build pipeline** — yarn-only lockfile, no conflicting `package-lock.json`
 
-Goal: a Sunsama-quality landing page that ranks on Google AND gets cited by AI assistants.
+### Remaining (finish before Phase 3)
 
-### Landing page (Next.js, same repo, statically rendered)
-- [ ] Hero: **"Stop guessing where your day went."** + subhead from `BRAND.md` + CTA **Start Reflecting**
-- [ ] Problem → solution narrative (Sunsama's structure: "work is chaotic" ❌❌❌ → "clarity" ✅✅✅).
-- [ ] Feature sections with real screenshots: hourly tracker, planner, analytics.
-- [ ] Social proof section (starts empty — fill with beta user quotes ASAP).
-- [ ] Single CTA everywhere: "Start free — no credit card."
-- [ ] Feedback modal inside the app (simple: rating + text → DB table + optional email notification to you).
+| Task | Why | Effort |
+|---|---|---|
+| [ ] **Buy domain** (`daymirror.com` or `.app`) | SEO + email + trust. Set once, never change. | 30 min |
+| [ ] **Point domain to Vercel** | Replace `*.vercel.app` in `BETTER_AUTH_URL` + Google OAuth | 1 hr |
+| [ ] **Enable Vercel Analytics** in dashboard | Traffic baseline before landing page launch | 5 min |
+| [ ] **Sentry** (free tier) | Catch production errors you'd never see | 2 hrs |
+| [ ] **Verify Neon PITR** | Confirm backup retention in Neon dashboard | 15 min |
+| [ ] **Production smoke test doc** | Sign up → log hour → create task → refresh → sign out → sign in | 15 min |
+| [ ] **Update `CONTEXT.md`** after domain live | Single source of truth for new sessions | 5 min |
 
-### Classic SEO
-- [ ] Next.js Metadata API on every page: title, description, OpenGraph, Twitter cards.
-- [ ] `sitemap.xml` + `robots.txt` (Next.js has built-in generators).
-- [ ] JSON-LD structured data: `SoftwareApplication` + `FAQPage` schema.
-- [ ] Google Search Console + Bing Webmaster verified on day one.
-- [ ] Core Web Vitals green (static landing page ⇒ near-free win).
+### Optional (can defer to Phase 4)
 
-### AEO / AI-search optimization (ChatGPT, Perplexity, Google AI Overviews)
-AI assistants cite pages that answer questions directly. Ship a `/blog` or `/guides` section with question-shaped, genuinely useful content:
-- [ ] "Where does my time actually go? How to run a time audit" 
-- [ ] "Why todo lists fail (and what to do instead)"
-- [ ] "Hourly time tracking vs time blocking: which fixes focus?"
-- [ ] "How to build a daily review habit that sticks"
-- [ ] FAQ page with literal questions people ask ("how do I stop wasting my day", "app to see where my time goes").
-- [ ] Every article: clear H2 questions, direct first-paragraph answers, comparison tables, updated dates. This is what LLMs quote.
-- [ ] Get listed: AlternativeTo, Product Hunt, futurepedia-style directories — AI models crawl these heavily.
+- [ ] Staging = Vercel preview deployments + Neon branch DB
+- [ ] Uptime monitoring (Better Uptime free tier or Vercel)
+
+### Phase 2 exit criteria
+
+Before starting the landing page:
+
+1. Custom domain live (or committed decision to ship on `.vercel.app` for beta)
+2. Sentry catching errors
+3. You can sign up on production, use the app for a full day, data persists
+4. Analytics enabled — you can see visitor count
+
+---
+
+## Phase 3 — Landing Page + SEO/AEO (Week 3) `[NEXT]`
+
+Goal: convert visitors + rank for how people actually search.
+
+> **All copy lives in `BRAND.md`** — hero, tagline bank, SEO keywords, page wireframe.
+
+### Landing page (Next.js, same repo)
+
+- [x] **Hero** — "Stop guessing where your day went." + subhead + tracker preview + **Start Reflecting**
+- [x] **Category line** — "Your personal Time Audit" / "The Time Audit App"
+- [x] **Problem → solution** — planned vs actual narrative
+- [x] **Pillars section** — Reflect / Understand / Improve
+- [x] **Positioning quote** — "Most productivity apps help you plan…"
+- [x] **Feature sections** — Tracker (hero), Planner, Analytics
+- [x] **FAQ** — question-shaped copy (AEO-ready)
+- [x] **CTA footer** — Start Reflecting + "Free — no credit card"
+- [x] **Authed users** hitting `/` → redirect to `/planner`
+- [x] **Metadata** — title, description, OpenGraph, Twitter
+- [x] **`sitemap.xml` + `robots.txt`**
+- [x] **JSON-LD** — `SoftwareApplication` + `FAQPage` schema
+- [ ] **Real product screenshots** — replace static preview when ready
+- [ ] **Social proof** — beta quotes (Phase 4)
+- [ ] Google Search Console (needs custom domain or verify `.vercel.app`)
+
+### AEO / AI-search (what gets cited by ChatGPT, Perplexity)
+
+Ship `/guides` with articles that answer real searches:
+
+| Article title | Targets search |
+|---|---|
+| Where does my time actually go? How to run a time audit | "time audit", "where did my day go" |
+| Why todo lists fail (and what to do instead) | "productivity app", self-improvement |
+| Hourly time tracking vs time blocking | "time tracker", "focus app" |
+| How to build a daily review habit that sticks | "daily reflection", "daily review" |
+| How do I stop wasting my day? | emotional search — hero copy answers this |
+
+Every article: H2 = literal question, first paragraph = direct answer, comparison table, `dateModified` visible.
+
+### Distribution (day one of landing)
+
+- [ ] Submit to AlternativeTo, Product Hunt (prep), futurepedia-style directories
+- [ ] One build-in-public post with positioning line from `BRAND.md`
+
+---
 
 ## Phase 4 — Free Beta Launch (Week 4)
 
-- [ ] Feedback modal live + a `feedback` DB table. Read every entry.
+### Prep slice (current — see `.workflow/scope/phase-4-prep.md`)
+
+1. [x] **Feedback modal** + `feedback` DB table (`POST /api/feedback`, account menu)
+2. [x] **Security pass** — rate limits, headers, audit doc
+3. [x] **Tracker hour window** — settings defaults + per day from/to on tracker
+4. [x] **Work sessions** — multi-block days, rest between sessions
+5. [ ] **Tasks + tracker flow** — after specs for #3–4
+
+### Launch checklist
+
+- [x] Feedback modal live + a `feedback` DB table. Read every entry. (`yarn db:push` applied)
 - [ ] Onboarding: first-run walkthrough that gets the user to log ONE hour and add ONE task (activation moment).
 - [ ] Launch posts: Product Hunt, Hacker News (Show HN), r/productivity, r/SideProject, X/Twitter build-in-public thread.
 - [ ] Measure ONE metric: **day-7 tracker retention** (did they log hours a week later?). Everything else is noise.
 - [ ] Weekly changelog posts — shipping visibly is marketing.
+- [ ] Collect 3 beta quotes for landing page social proof section.
 
 ## Phase 5 — Influencer / Referral Program (Month 2+)
 
@@ -110,6 +168,7 @@ Your instinct is right, but sequence matters: **do NOT pitch influencers before 
 
 1. **Retention before reach.** Marketing amplifies what exists; it can't fix a leaky bucket.
 2. **The tracker is the wedge.** Nobody needs another todo app; plan-vs-reality is the story.
-3. **Ship weekly, publicly.** Build-in-public is a free marketing channel that compounds.
-4. **One metric per phase.** Phase 4: day-7 retention. Phase 5: referred-user activation. Phase 6: free→paid conversion.
-5. **Don't rebuild the stack.** Next.js + Hono + Drizzle + Postgres is right. Boring is a feature.
+3. **Brand + category.** DayMirror (memorable) + Time Audit (searchable). See `BRAND.md`.
+4. **Ship weekly, publicly.** Build-in-public is a free marketing channel that compounds.
+5. **One metric per phase.** Phase 2: production stability. Phase 3: landing conversion. Phase 4: day-7 retention. Phase 5: referred-user activation. Phase 6: free→paid conversion.
+6. **Don't rebuild the stack.** Next.js + Hono + Drizzle + Postgres is right. Boring is a feature.

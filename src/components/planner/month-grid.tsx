@@ -14,6 +14,7 @@ import {
 import { useTasksInRange } from "@/hooks/use-tasks";
 import { CATEGORY_COLORS } from "@/lib/constants";
 import { expandTasksForRange, type TaskOccurrence } from "@/lib/recurrence";
+import { buildCompletionsMap, buildProgressMap } from "@/lib/task-progress-maps";
 import { cn } from "@/lib/utils";
 import type { TaskDto } from "@/types/api";
 
@@ -32,13 +33,13 @@ export function MonthGrid({ date, onDayClick, onTaskClick }: MonthGridProps) {
 
   const occurrences = useMemo(() => {
     if (!tasksQ.data) return [];
-    const map = new Map<string, Set<string>>();
-    tasksQ.data.completions.forEach((c) => {
-      const set = map.get(c.taskId) ?? new Set();
-      set.add(c.occurrenceDate);
-      map.set(c.taskId, set);
-    });
-    return expandTasksForRange<TaskDto>(tasksQ.data.tasks, gridStart, gridEnd, map);
+    return expandTasksForRange<TaskDto>(
+      tasksQ.data.tasks,
+      gridStart,
+      gridEnd,
+      buildCompletionsMap(tasksQ.data.completions),
+      buildProgressMap(tasksQ.data.progress ?? []),
+    );
   }, [tasksQ.data, gridStart, gridEnd]);
 
   const byDate = useMemo(() => {
@@ -77,7 +78,7 @@ export function MonthGrid({ date, onDayClick, onTaskClick }: MonthGridProps) {
             <div
               key={key}
               className={cn(
-                "group min-h-[5.5rem] cursor-pointer border-b border-r border-border/50 p-1.5 transition hover:bg-accent/30 sm:min-h-[7rem] lg:min-h-[8.5rem] lg:p-2 xl:min-h-[10rem]",
+                "group min-h-[5.5rem] cursor-pointer border-b border-r border-border/50 p-1.5 transition hover:bg-hover sm:min-h-[7rem] lg:min-h-[8.5rem] lg:p-2 xl:min-h-[10rem]",
                 !inMonth && "bg-muted/20",
               )}
               onClick={() => onDayClick(d)}

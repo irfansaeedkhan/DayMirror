@@ -7,7 +7,7 @@ type Bucket = {
 };
 
 /**
- * In-memory fixed-window rate limiter, keyed by client IP.
+ * In-memory fixed-window rate limiter.
  * Good enough for launch on a single instance; swap the store for
  * Upstash Redis when running on serverless with real traffic.
  */
@@ -24,7 +24,7 @@ function cleanup(now: number) {
   }
 }
 
-function getClientKey(c: Context): string {
+export function getClientKey(c: Context): string {
   const forwarded = c.req.header("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0].trim();
   return c.req.header("x-real-ip") ?? "unknown";
@@ -33,33 +33,68 @@ function getClientKey(c: Context): string {
 type RateLimitOptions = {
   windowMs?: number;
   limit?: number;
+  /** Namespace so different limiters don't share buckets. */
+  keyPrefix?: string;
+  /** When set, only count these HTTP methods. */
+  methods?: string[];
+  /** Custom bucket key; defaults to client IP. */
+  keyResolver?: (c: Context) => string;
 };
 
-export function rateLimiter({ windowMs = 60_000, limit = 300 }: RateLimitOptions = {}) {
+function applyRateLimit(c: Context, key: string, windowMs: number, limit: number) {
+  const now = Date.now();
+  cleanup(now);
+
+  let bucket = buckets.get(key);
+
+  if (!bucket || bucket.resetAt <= now) {
+    bucket = { count: 0, resetAt: now + windowMs };
+    buckets.set(key, bucket);
+  }
+
+  bucket.count += 1;
+
+  const remaining = Math.max(0, limit - bucket.count);
+  c.header("X-RateLimit-Limit", String(limit));
+  c.header("X-RateLimit-Remaining", String(remaining));
+  c.header("X-RateLimit-Reset", String(Math.ceil(bucket.resetAt / 1000)));
+
+  if (bucket.count > limit) {
+    c.header("Retry-After", String(Math.ceil((bucket.resetAt - now) / 1000)));
+    throw new HTTPException(429, { message: "Too many requests. Please slow down." });
+  }
+}
+
+export function rateLimiter({
+  windowMs = 60_000,
+  limit = 300,
+  keyPrefix = "global",
+  methods,
+  keyResolver,
+}: RateLimitOptions = {}) {
   return async (c: Context, next: Next) => {
-    const now = Date.now();
-    cleanup(now);
-
-    const key = getClientKey(c);
-    let bucket = buckets.get(key);
-
-    if (!bucket || bucket.resetAt <= now) {
-      bucket = { count: 0, resetAt: now + windowMs };
-      buckets.set(key, bucket);
+    if (methods && !methods.includes(c.req.method)) {
+      return next();
     }
 
-    bucket.count += 1;
-
-    const remaining = Math.max(0, limit - bucket.count);
-    c.header("X-RateLimit-Limit", String(limit));
-    c.header("X-RateLimit-Remaining", String(remaining));
-    c.header("X-RateLimit-Reset", String(Math.ceil(bucket.resetAt / 1000)));
-
-    if (bucket.count > limit) {
-      c.header("Retry-After", String(Math.ceil((bucket.resetAt - now) / 1000)));
-      throw new HTTPException(429, { message: "Too many requests. Please slow down." });
-    }
-
+    const baseKey = keyResolver ? keyResolver(c) : getClientKey(c);
+    const key = `${keyPrefix}:${baseKey}`;
+    applyRateLimit(c, key, windowMs, limit);
     await next();
   };
+}
+
+/** Per-user write cap on authenticated API routes (POST/PATCH/PUT/DELETE). */
+export function writeRateLimiter() {
+  return rateLimiter({
+    keyPrefix: "write",
+    windowMs: 60_000,
+    limit: 90,
+    methods: ["POST", "PUT", "PATCH", "DELETE"],
+    keyResolver: (c) => {
+      const userId = c.get("userId");
+      if (typeof userId === "string" && userId) return `user:${userId}`;
+      return `ip:${getClientKey(c)}`;
+    },
+  });
 }

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getOptionalSession } from "@/lib/auth";
 
 const PROTECTED_PREFIXES = ["/planner", "/tracker", "/analytics"];
 const AUTH_PAGES = ["/login", "/signup"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await getOptionalSession(request.headers);
 
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
   const isAuthPage = AUTH_PAGES.some((p) => pathname === p);
@@ -18,7 +18,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isAuthPage && session) {
-    return NextResponse.redirect(new URL("/planner", request.url));
+    return NextResponse.redirect(new URL("/tracker", request.url));
   }
 
   return NextResponse.next();
